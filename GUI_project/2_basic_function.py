@@ -1,4 +1,5 @@
 import tkinter.ttk as ttk
+import tkinter.messagebox as msgbox
 from tkinter import *
 from tkinter import filedialog # __all__에 정의되어있지 않은 submodule입니다.
 
@@ -21,9 +22,37 @@ def add_file():
 # 삭제시 인덱스가 당겨지는 것을 주의해야 한다.
 # 따라서 뒤에서부터 지운다.
 def del_file():
-    print(list_file.curselection())
+    # print(list_file.curselection())
+    for index in reversed(list_file.curselection()): # .reverse() : Reverse list with no return
+                                                     # reversed() : Return reversed list with no change
+        list_file.delete(index)
 
-    for index 
+# Storage path (Folder)
+def browse_dest_path():
+    folder_selected = filedialog.askdirectory()
+    if folder_selected == '': # is None 이 아닌 이유?
+        return
+    # print(folder_selected)
+    txt_dest_path.delete(0, END) # enntry 가 아닌 text 였다면 ("1.0", END)
+    txt_dest_path.insert(0, folder_selected)
+
+# Start
+def start():
+    # Check each options
+    print("Width :", cmb_width.get())
+    print("Interval :", cmb_interval.get())
+    print("Format :", cmb_format.get())
+
+    # Check file list
+    if list_file.size() == 0:
+        msgbox.showwarning("Warning", "Add image files")
+        return
+
+    # Check Storage path
+    # 실제 프로젝트에서는 유효한 저장경로인지도 판단해야 한다.
+    if len(txt_dest_path.get()) == 0:
+        msgbox.showwarning("Warning", "Add storage path")
+        return
 
 # File frame(add file, delete selected file)
 file_frame = Frame(root)
@@ -54,7 +83,7 @@ path_frame.pack(fill="x", padx=5, pady=5, ipady=5)
 txt_dest_path = Entry(path_frame)
 txt_dest_path.pack(side="left", fill="x", expand=True, padx=5, pady=5, ipady=4)
 
-btn_dest_path = Button(path_frame, text="Search", width=10)
+btn_dest_path = Button(path_frame, text="Search", width=10, command=browse_dest_path)
 btn_dest_path.pack(side="right", padx=5, pady=5)
 
 # Option frame
@@ -103,7 +132,7 @@ frame_run.pack(fill="x", padx=5, pady=5)
 btn_close = Button(frame_run, padx=5, pady=5, text="Close", width=12, command=root.quit)
 btn_close.pack(side="right", padx=5, pady=5)
 
-btn_start = Button(frame_run, padx=5, pady=5, text="Start", width = 12)
+btn_start = Button(frame_run, padx=5, pady=5, text="Start", width = 12, command=start)
 btn_start.pack(side="right", padx=5, pady=5)
 
 root.resizable(False, False)    # x(width), y(length) value cannot be changed (window size cannot be changed)
