@@ -43,8 +43,11 @@ def merge_image():
     # print(list_file.get(0, END)) # Get all file list
     images = [Image.open(x) for x in list_file.get(0, END)] # Save as list
     # size -> size [0] : width, size[1] : height
-    widths = [x.size[0] for x in images]
-    heights = [x.size[1] for x in images]
+    # widths = [x.size[0] for x in images]
+    # heights = [x.size[1] for x in images]
+
+    # [(19, 10), (20, 20), (30, 30)]
+    widths, heights = zip(*(x.size for x in images)) # Make list
 
     # Calculate max width and total height
     max_width, total_height = max(widths), sum(heights)
