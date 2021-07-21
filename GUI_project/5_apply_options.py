@@ -33,6 +33,7 @@ def del_file():
 def browse_dest_path():
     folder_selected = filedialog.askdirectory() # 최초 폴더 지정 안하나?
     if folder_selected == '': # is None 이 아닌 이유?
+                              # askdirecory() 반환 시 빈 문자열 반환
         return
     # print(folder_selected)
     txt_dest_path.delete(0, END) # enntry 가 아닌 text 였다면 ("1.0", END)
@@ -44,85 +45,88 @@ def merge_image():
     # print("Interval :", cmb_interval.get())
     # print("Format :", cmb_format.get())
 
-    # Width
-    img_width = cmb_width.get()
-    if img_width == "Keep original":
-        img_width = -1
-    else:
-        img_width = int(img_width)
+    try: # Win 10은 C드라이브에 관리자 권한 없이 파일을 작성할 수 없다.
+        # Width
+        img_width = cmb_width.get()
+        if img_width == "Keep original":
+            img_width = -1
+        else:
+            img_width = int(img_width)
 
-    # Interval
-    img_interval = cmb_interval.get()
-    if img_interval == "Narrow":
-        img_interval = 30
-    elif img_interval == "Standard":
-        img_interval = 60
-    elif img_interval == "Wide":
-        img_interval = 90
-    else:
-        img_interval = 0
+        # Interval
+        img_interval = cmb_interval.get()
+        if img_interval == "Narrow":
+            img_interval = 30
+        elif img_interval == "Standard":
+            img_interval = 60
+        elif img_interval == "Wide":
+            img_interval = 90
+        else:
+            img_interval = 0
 
-    # Format
-    img_format = cmb_format.get().lower()
-    
-    ###############################################################################
+        # Format
+        img_format = cmb_format.get().lower()
+        
+        ###############################################################################
 
-    images = [Image.open(x) for x in list_file.get(0, END)] # Save as list
+        images = [Image.open(x) for x in list_file.get(0, END)] # Save as list
 
-    # 이미지 사이즈 리스트에 넣어서 하나씩 처리
-    image_sizes = [] # [(w1, h1), (w2, h2), ...]
-    if img_width > -1:
-        # Change width
-        image_sizes = [(int(img_width), int(img_width*x.size[1]/x.size[0])) \
-            for x in images] # int의 범위를 왜 전부로 해주냐
-                             # 해당 변수를 사용할 때 정수로 받아야 해서
-    else:
-        # Keep original
-        image_sizes = [(x.size[0], x.size[1]) for x in images]
-
-    # Claculate logic
-    # 100 * 60 -> 80 * ??
-    # (origin w) : (origin h) = (changed w) : (changed h)
-    #    100     :     60     =     80      :     ??
-    #     x      :      y     =     x'      :     y'
-    # x*y' = x'*y
-    # y'   = (x'*y)/x
-    # ??   = 48
-
-    # x  = width     = size[0]
-    # y  = height    = size[1]
-    # x' = img_width
-    # y' = (img_width*size[1])/size[0]
-
-    widths, heights = zip(*(image_sizes)) # Make list
-
-    # Calculate max width and total height
-    max_width, total_height = max(widths), sum(heights)
-
-    # Prepare sketchbook
-    if img_interval > 0:
-        total_height += (img_interval*(len(images) - 1))
-
-    result_image = Image.new("RGB", (max_width, total_height), (255, 255, 255))
-    y_offset = 0
-
-    for idx, img in enumerate(images):
-        # 가로가 원본이 아닌 경우에는 크기 조정 필요
+        # 이미지 사이즈 리스트에 넣어서 하나씩 처리
+        image_sizes = [] # [(w1, h1), (w2, h2), ...]
         if img_width > -1:
-            img = img.resize(image_sizes[idx])
+            # Change width
+            image_sizes = [(int(img_width), int(img_width*x.size[1]/x.size[0])) \
+                for x in images] # int의 범위를 왜 전부로 해주냐
+                                # 해당 변수를 사용할 때 정수로 받아야 해서
+        else:
+            # Keep original
+            image_sizes = [(x.size[0], x.size[1]) for x in images]
 
-        result_image.paste(img, (0, y_offset))
-        y_offset += (img.size[1] + img_interval)
+        # Claculate logic
+        # 100 * 60 -> 80 * ??
+        # (origin w) : (origin h) = (changed w) : (changed h)
+        #    100     :     60     =     80      :     ??
+        #     x      :      y     =     x'      :     y'
+        # x*y' = x'*y
+        # y'   = (x'*y)/x
+        # ??   = 48
 
-        progress = (idx + 1) / len(images) * 100
-        p_var.set(progress)
-        progress_bar.update()
+        # x  = width     = size[0]
+        # y  = height    = size[1]
+        # x' = img_width
+        # y' = (img_width*size[1])/size[0]
 
-    # Format option processing
-    file_name = "Tng photo." + img_format
-    dest_path = os.path.join(txt_dest_path.get(), file_name)
-    result_image.save(dest_path)
-    msgbox.showinfo("Notice", "Process is done")
+        widths, heights = zip(*(image_sizes)) # Make list
+
+        # Calculate max width and total height
+        max_width, total_height = max(widths), sum(heights)
+
+        # Prepare sketchbook
+        if img_interval > 0:
+            total_height += (img_interval*(len(images) - 1))
+
+        result_image = Image.new("RGB", (max_width, total_height), (255, 255, 255))
+        y_offset = 0
+
+        for idx, img in enumerate(images):
+            # 가로가 원본이 아닌 경우에는 크기 조정 필요
+            if img_width > -1:
+                img = img.resize(image_sizes[idx])
+
+            result_image.paste(img, (0, y_offset))
+            y_offset += (img.size[1] + img_interval)
+
+            progress = (idx + 1) / len(images) * 100
+            p_var.set(progress)
+            progress_bar.update()
+
+        # Format option processing
+        file_name = "Tng photo." + img_format
+        dest_path = os.path.join(txt_dest_path.get(), file_name)
+        result_image.save(dest_path)
+        msgbox.showinfo("Notice", "Process is done")
+    except Exception as err:
+        msgbox.showerror("Error", err)
 
 # Start
 def start():
